@@ -96,7 +96,7 @@ const PRESET_GROUPS = [
     ],
   },
   {
-    title: "返屋企食菜",
+    title: "返屋企食菜🥬",
     presets: [
       ["kmb-271", "kmb-271-to-home"],
       ["kmb-72x", "kmb-72x-to-home"],
@@ -178,7 +178,7 @@ function renderPresetButtons() {
   els.presetButtons.innerHTML = PRESET_GROUPS.map((group) => `
     <section class="preset-group">
       <h2>${escapeHtml(group.title)}</h2>
-      <div class="preset-grid">
+      <div class="preset-list">
         ${group.presets.map(([routeId, tripId]) => {
       const route = getRouteById(routeId);
       const trip = getTripById(route, tripId);

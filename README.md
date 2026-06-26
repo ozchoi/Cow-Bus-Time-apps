@@ -17,7 +17,7 @@ Presets:
 - KMB 72X: `屋企🥬🐮返大埔`, inbound stop 7
 - KMB 271: `油麻地返大埔`, inbound stop 10
 
-返屋企食菜:
+返屋企食菜🥬:
 
 - KMB 271: `大埔返屋企🥬🐮`, outbound stop 7
 - KMB 72X: `大埔返屋企🥬🐮`, outbound stop 7
