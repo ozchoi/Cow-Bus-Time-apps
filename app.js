@@ -1,6 +1,22 @@
 const KMB_BASE = "https://data.etabus.gov.hk/v1/transport/kmb";
 const GMB_BASE = "https://data.etagmb.gov.hk";
 const LEAVE_COUNTDOWN_MINUTES = 3;
+const NEARBY_ROUTE_WINDOW_MINUTES = 10;
+const NELSON_TO_WING_SING_ROUTES = [
+  { route: "1", bound: "O", serviceType: "1", stopId: "6AB438AD3AE100DD", stopSeq: 17, stopLabel: "NELSON STREET MK515", destLabel: "WING SING LANE YT542" },
+  { route: "1A", bound: "O", serviceType: "1", stopId: "6AB438AD3AE100DD", stopSeq: 26, stopLabel: "NELSON STREET MK515", destLabel: "WING SING LANE YT542" },
+  { route: "2", bound: "I", serviceType: "1", stopId: "6AB438AD3AE100DD", stopSeq: 11, stopLabel: "NELSON STREET MK515", destLabel: "WING SING LANE YT542" },
+  { route: "6", bound: "I", serviceType: "1", stopId: "6AB438AD3AE100DD", stopSeq: 13, stopLabel: "NELSON STREET MK515", destLabel: "WING SING LANE YT542" },
+  { route: "70S", bound: "I", serviceType: "1", stopId: "14F176D358D65A8B", stopSeq: 13, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
+  { route: "87C", bound: "O", serviceType: "1", stopId: "14F176D358D65A8B", stopSeq: 14, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
+  { route: "87D", bound: "O", serviceType: "3", stopId: "14F176D358D65A8B", stopSeq: 13, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
+  { route: "87D", bound: "O", serviceType: "4", stopId: "14F176D358D65A8B", stopSeq: 18, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
+  { route: "87D", bound: "O", serviceType: "1", stopId: "14F176D358D65A8B", stopSeq: 19, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
+  { route: "87E", bound: "O", serviceType: "1", stopId: "14F176D358D65A8B", stopSeq: 11, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
+  { route: "281A", bound: "O", serviceType: "1", stopId: "14F176D358D65A8B", stopSeq: 13, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
+  { route: "N216", bound: "O", serviceType: "1", stopId: "14F176D358D65A8B", stopSeq: 35, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
+  { route: "N241", bound: "I", serviceType: "1", stopId: "14F176D358D65A8B", stopSeq: 42, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
+];
 
 const ROUTES = [
   {
@@ -84,6 +100,19 @@ const ROUTES = [
       },
     ],
   },
+  {
+    id: "kmb-nelson-wing-sing",
+    label: "KMB",
+    operator: "KMB_MULTI",
+    trips: [
+      {
+        id: "kmb-nelson-wing-sing-to-yau-ma-tei",
+        label: "屋企🥬🐮返油麻地",
+        reminderAtMinutes: 8,
+        reminderAction: "出門",
+      },
+    ],
+  },
 ];
 
 const PRESET_GROUPS = [
@@ -92,6 +121,7 @@ const PRESET_GROUPS = [
     presets: [
       ["kmb-271", "kmb-271-home-to-taipo"],
       ["kmb-72x", "kmb-72x-to-taipo"],
+      ["kmb-nelson-wing-sing", "kmb-nelson-wing-sing-to-yau-ma-tei"],
       ["kmb-271", "kmb-271-yau-ma-tei-to-taipo"],
     ],
   },
@@ -123,7 +153,7 @@ const state = {
   stop: null,
   gmbRouteId: null,
   loadToken: 0,
-  selectedArrivalSeq: null,
+  selectedArrivalId: null,
   arrivals: [],
 };
 
@@ -152,7 +182,7 @@ function wireEvents() {
     state.routeId = button.dataset.routeId;
     state.tripId = button.dataset.tripId;
     state.stop = null;
-    state.selectedArrivalSeq = null;
+    state.selectedArrivalId = null;
     renderPresetButtons();
     loadPreset();
   });
@@ -160,7 +190,7 @@ function wireEvents() {
   els.etaList.addEventListener("click", (event) => {
     const card = event.target.closest(".eta-card");
     if (!card) return;
-    state.selectedArrivalSeq = Number(card.dataset.arrivalSeq);
+    state.selectedArrivalId = card.dataset.arrivalId;
     renderEta(state.arrivals);
   });
 
@@ -169,7 +199,7 @@ function wireEvents() {
     const card = event.target.closest(".eta-card");
     if (!card) return;
     event.preventDefault();
-    state.selectedArrivalSeq = Number(card.dataset.arrivalSeq);
+    state.selectedArrivalId = card.dataset.arrivalId;
     renderEta(state.arrivals);
   });
 }
@@ -228,13 +258,15 @@ async function refreshEta({ quiet = false, token = state.loadToken } = {}) {
   try {
     const route = currentRoute();
     const trip = currentTrip();
-    const arrivals = route.operator === "KMB"
-      ? await getKmbEta(route, trip, state.stop)
-      : await getGmbEta(trip, state.stop);
+    const arrivals = route.operator === "KMB_MULTI"
+      ? await getNearbyKmbEta()
+      : route.operator === "KMB"
+        ? await getKmbEta(route, trip, state.stop)
+        : await getGmbEta(trip, state.stop);
     if (token !== state.loadToken) return;
     state.arrivals = arrivals;
-    if (!arrivals.some((arrival) => arrival.seq === state.selectedArrivalSeq)) {
-      state.selectedArrivalSeq = null;
+    if (!arrivals.some((arrival) => arrival.id === state.selectedArrivalId)) {
+      state.selectedArrivalId = null;
     }
     renderRouteName();
     renderEta(arrivals);
@@ -252,9 +284,14 @@ async function refreshEta({ quiet = false, token = state.loadToken } = {}) {
 async function getSelectedStop() {
   const route = currentRoute();
   const trip = currentTrip();
-  return route.operator === "KMB"
-    ? getKmbStop(route, trip)
-    : getGmbStop(route, trip);
+  if (route.operator === "KMB_MULTI") {
+    return {
+      seq: "",
+      nameEn: "Nelson Street MK514/MK515 → Wing Sing Lane YT544/YT542",
+      nameTc: "奶路臣街 → 永星里",
+    };
+  }
+  return route.operator === "KMB" ? getKmbStop(route, trip) : getGmbStop(route, trip);
 }
 
 async function getKmbStop(route, trip) {
@@ -304,6 +341,7 @@ async function getKmbEta(route, trip, stop) {
     .filter((item) => item.dir === trip.bound && Number(item.seq) === stop.seq)
     .slice(0, 3)
     .map((item) => ({
+      id: `${route.route}-${trip.bound}-${route.serviceType}-${item.eta_seq}`,
       seq: item.eta_seq,
       time: item.eta ? new Date(item.eta) : null,
       minutes: item.eta ? minutesUntil(item.eta) : null,
@@ -311,10 +349,44 @@ async function getKmbEta(route, trip, stop) {
     }));
 }
 
+async function getNearbyKmbEta() {
+  const arrivals = await Promise.all(NELSON_TO_WING_SING_ROUTES.map(async (candidate) => {
+    const json = await fetchJson(`${KMB_BASE}/eta/${candidate.stopId}/${candidate.route}/${candidate.serviceType}`);
+    return json.data
+      .filter((item) => item.dir === candidate.bound && Number(item.seq) === candidate.stopSeq)
+      .map((item) => {
+        const minutes = item.eta ? minutesUntil(item.eta) : null;
+        return {
+          id: `${candidate.route}-${candidate.bound}-${candidate.serviceType}-${item.eta_seq}-${item.eta || "none"}`,
+          seq: item.eta_seq,
+          routeLabel: `Route ${candidate.route}`,
+          routeNumber: candidate.route,
+          time: item.eta ? new Date(item.eta) : null,
+          minutes,
+          remark: `${candidate.stopLabel} → ${candidate.destLabel}`,
+        };
+      })
+      .filter((arrival) => arrival.minutes != null && arrival.minutes <= NEARBY_ROUTE_WINDOW_MINUTES);
+  }));
+
+  const seen = new Set();
+  return arrivals
+    .flat()
+    .filter((arrival) => {
+      const key = `${arrival.routeNumber}-${arrival.time?.toISOString() || "none"}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((a, b) => a.minutes - b.minutes || a.routeLabel.localeCompare(b.routeLabel, undefined, { numeric: true }))
+    .slice(0, 12);
+}
+
 async function getGmbEta(trip, stop) {
   const routeId = await getGmbRouteId(currentRoute());
   const json = await fetchJson(`${GMB_BASE}/eta/route-stop/${routeId}/${trip.routeSeq}/${stop.seq}`);
   return (json.data.eta || []).slice(0, 3).map((item) => ({
+    id: `gmb-${trip.routeSeq}-${item.eta_seq}`,
     seq: item.eta_seq,
     time: item.timestamp ? new Date(item.timestamp) : null,
     minutes: Number.isFinite(item.diff) ? item.diff : minutesUntil(item.timestamp),
@@ -327,24 +399,29 @@ function renderRouteName() {
   const trip = currentTrip();
   els.routeName.textContent = `${route.label}: ${trip.label}`;
   els.stopName.textContent = state.stop
-    ? `Stop ${state.stop.seq}: ${state.stop.nameEn} / ${state.stop.nameTc}`
+    ? route.operator === "KMB_MULTI"
+      ? `${state.stop.nameEn} / ${state.stop.nameTc}`
+      : `Stop ${state.stop.seq}: ${state.stop.nameEn} / ${state.stop.nameTc}`
     : "";
 }
 
 function renderEta(arrivals) {
   if (!arrivals.length) {
-    els.etaList.innerHTML = `<div class="empty-state">No arrival data for this stop right now.</div>`;
+    const emptyText = currentRoute().operator === "KMB_MULTI"
+      ? `No matching route arrivals within ${NEARBY_ROUTE_WINDOW_MINUTES} minutes right now.`
+      : "No arrival data for this stop right now.";
+    els.etaList.innerHTML = `<div class="empty-state">${emptyText}</div>`;
     renderReminder(null);
     return;
   }
 
   els.etaList.innerHTML = arrivals.map((arrival) => {
-    const selected = arrival.seq === state.selectedArrivalSeq;
+    const selected = arrival.id === state.selectedArrivalId;
     const minutesText = arrival.minutes == null ? "--" : arrival.minutes <= 0 ? "Due" : arrival.minutes;
     const unit = typeof minutesText === "number" ? "min" : "";
     return `
-      <article class="eta-card" data-arrival-seq="${arrival.seq}" aria-selected="${selected}" tabindex="0">
-        <div class="seq"><span>Arrival ${arrival.seq}</span><span>${selected ? "Selected" : unit}</span></div>
+      <article class="eta-card" data-arrival-id="${escapeHtml(arrival.id)}" aria-selected="${selected}" tabindex="0">
+        <div class="seq"><span>${escapeHtml(arrival.routeLabel || `Arrival ${arrival.seq}`)}</span><span>${selected ? "Selected" : unit}</span></div>
         <p class="minutes">${minutesText}</p>
         <p class="time">${arrival.time ? formatTime(arrival.time) : "Time unavailable"}</p>
         <p class="remark">${escapeHtml(arrival.remark)}</p>
@@ -352,7 +429,7 @@ function renderEta(arrivals) {
     `;
   }).join("");
 
-  renderReminder(arrivals.find((arrival) => arrival.seq === state.selectedArrivalSeq));
+  renderReminder(selectedArrival());
 }
 
 function renderReminder(arrival) {
@@ -368,7 +445,7 @@ function renderReminder(arrival) {
 
   if (arrival.minutes == null) {
     els.reminderPanel.innerHTML = `
-      <p class="reminder-title">Selected arrival ${arrival.seq}</p>
+      <p class="reminder-title">Selected ${escapeHtml(arrival.routeLabel || `arrival ${arrival.seq}`)}</p>
       <p class="reminder-copy">Arrival time unavailable.</p>
     `;
     els.reminderPanel.dataset.status = "idle";
@@ -387,7 +464,7 @@ function renderReminder(arrival) {
 
   els.reminderPanel.innerHTML = `
     <p class="reminder-title">${escapeHtml(reminderTitle)}</p>
-    <p class="reminder-copy">${trip.reminderAction}時間 ${formatTime(leaveTime)} · Selected arrival ${arrival.seq} at ${arrival.time ? formatTime(arrival.time) : "--"} · ${arrival.minutes} min</p>
+    <p class="reminder-copy">${trip.reminderAction}時間 ${formatTime(leaveTime)} · Selected ${escapeHtml(arrival.routeLabel || `arrival ${arrival.seq}`)} at ${arrival.time ? formatTime(arrival.time) : "--"} · ${arrival.minutes} min</p>
   `;
   els.reminderPanel.dataset.status = minutesToLeave <= LEAVE_COUNTDOWN_MINUTES ? "active" : "waiting";
 }
@@ -425,7 +502,7 @@ function getTripById(route, tripId) {
 }
 
 function selectedArrival() {
-  return state.arrivals.find((arrival) => arrival.seq === state.selectedArrivalSeq);
+  return state.arrivals.find((arrival) => arrival.id === state.selectedArrivalId);
 }
 
 async function fetchCached(url) {

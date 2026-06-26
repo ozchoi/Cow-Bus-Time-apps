@@ -15,6 +15,7 @@ Presets:
 
 - KMB 271: `屋企🥬🐮返大埔`, inbound stop 13
 - KMB 72X: `屋企🥬🐮返大埔`, inbound stop 7
+- KMB all matching routes: `屋企🥬🐮返油麻地`, Nelson Street MK514/MK515 to Wing Sing Lane YT544/YT542, arrivals within 10 minutes
 - KMB 271: `油麻地返大埔`, inbound stop 10
 
 返屋企食菜🥬:
