@@ -458,8 +458,10 @@ function renderReminder(arrival) {
   const minutesToLeave = Math.max(0, Math.ceil(millisecondsToLeave / 60000));
   const isPastLeaveTime = millisecondsToLeave <= 0;
   const emoji = minutesToLeave <= 1 ? "🏃🏻‍♀️" : "❤️";
-  const reminderTitle = isPastLeaveTime
-    ? "條街好熱 辛苦牛牛耐心等等"
+  const reminderTitle = arrival.minutes <= 0
+    ? "巴士唔等你 菜菜都會等你❤️"
+    : isPastLeaveTime
+      ? "辛苦牛牛 開風扇搵遮陰 耐心等等"
     : `${minutesToLeave}分鐘後要${trip.reminderAction}${emoji}`;
 
   els.reminderPanel.innerHTML = `
