@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HK Route ETA</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="topbar" aria-labelledby="app-title">
+        <div>
+          <p class="eyebrow">菜菜整俾牛牛搭車用</p>
+          <h1 id="app-title">實時到站數據</h1>
+        </div>
+        <button id="refreshButton" class="icon-button" type="button" aria-label="Refresh arrivals" title="Refresh arrivals">
+          <span aria-hidden="true">↻</span>
+        </button>
+      </section>
+
+      <section class="preset-panel" aria-label="Trip choices">
+        <div id="presetButtons" class="preset-grid"></div>
+      </section>
+
+      <section class="status-band" aria-live="polite">
+        <div>
+          <p id="routeName" class="route-name">Loading route...</p>
+          <p id="stopName" class="stop-name"></p>
+          <p id="lastUpdated" class="muted">Fetching live arrivals</p>
+        </div>
+        <div id="clock" class="clock"></div>
+      </section>
+
+      <section id="reminderPanel" class="reminder-panel" data-status="idle" aria-live="polite">
+        <p class="reminder-title">未揀車</p>
+        <p class="reminder-copy">Click an arrival to target that bus.</p>
+      </section>
+
+      <section id="etaList" class="eta-list" aria-label="Arrivals"></section>
+    </main>
+
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>
