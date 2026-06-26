@@ -377,11 +377,12 @@ function renderReminder(arrival) {
 
   const leaveLeadMinutes = Math.max(0, trip.reminderAtMinutes - LEAVE_COUNTDOWN_MINUTES);
   const leaveTime = new Date(arrival.time.getTime() - leaveLeadMinutes * 60000);
-  const minutesToLeave = Math.max(0, Math.ceil((leaveTime.getTime() - Date.now()) / 60000));
-  const isLeaveTime = minutesToLeave <= 0;
+  const millisecondsToLeave = leaveTime.getTime() - Date.now();
+  const minutesToLeave = Math.max(0, Math.ceil(millisecondsToLeave / 60000));
+  const isPastLeaveTime = millisecondsToLeave <= 0;
   const emoji = minutesToLeave <= 1 ? "🏃🏻‍♀️" : "❤️";
-  const reminderTitle = isLeaveTime
-    ? `而家要${trip.reminderAction}${emoji}`
+  const reminderTitle = isPastLeaveTime
+    ? "條街好熱 辛苦牛牛耐心等等"
     : `${minutesToLeave}分鐘後要${trip.reminderAction}${emoji}`;
 
   els.reminderPanel.innerHTML = `
