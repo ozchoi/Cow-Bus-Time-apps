@@ -333,9 +333,10 @@ h2 {
 }
 
 .eta-card[aria-selected="true"] {
-  border-color: rgba(186, 59, 50, 0.55);
-  border-left-color: var(--red);
-  box-shadow: 0 18px 52px rgba(186, 59, 50, 0.2);
+  background: #d9ddde;
+  border-color: #9da5a8;
+  border-left-color: #687174;
+  box-shadow: 0 16px 42px rgba(29, 37, 40, 0.18);
 }
 
 .eta-card .seq {
