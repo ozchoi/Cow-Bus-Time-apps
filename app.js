@@ -675,9 +675,15 @@ function renderEta(arrivals) {
 function scrollToEtaAfterRouteChoice() {
   if (!state.shouldScrollToEta) return;
   state.shouldScrollToEta = false;
-  requestAnimationFrame(() => {
-    els.reminderPanel.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
+  requestAnimationFrame(() => scrollToEtaSection("smooth"));
+  setTimeout(() => scrollToEtaSection("auto"), 550);
+}
+
+function scrollToEtaSection(behavior) {
+  const target = els.trafficWarning || els.reminderPanel || els.etaList;
+  if (!target) return;
+  const top = Math.max(0, window.pageYOffset + target.getBoundingClientRect().top - 8);
+  window.scrollTo({ top, behavior });
 }
 
 function renderReminder(arrival) {
