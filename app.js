@@ -1,8 +1,39 @@
 const KMB_BASE = "https://data.etabus.gov.hk/v1/transport/kmb";
 const GMB_BASE = "https://data.etagmb.gov.hk";
 const CITYBUS_BASE = "https://rt.data.gov.hk/v2/transport/citybus";
+const TRAFFIC_NEWS_URL = "https://resource.data.one.gov.hk/td/tc/specialtrafficnews.xml";
+const TRAFFIC_CACHE_KEY = "cowBusTrafficNewsCacheV1";
+const TRAFFIC_CACHE_MS = 3 * 60 * 1000;
 const LEAVE_COUNTDOWN_MINUTES = 3;
 const NEARBY_ROUTE_WINDOW_MINUTES = 10;
+const TRAFFIC_ROUTE_KEYWORDS = {
+  "271": ["獅子山隧道", "吐露港公路", "大埔公路", "沙田", "大圍", "九龍塘"],
+  "72X": ["獅子山隧道", "吐露港公路", "大埔公路", "沙田", "大圍", "窩打老道", "旺角"],
+};
+const TRAFFIC_SEGMENT_LABELS = {
+  "獅子山隧道": "獅子山隧道",
+  "吐露港公路": "吐露港公路",
+  "大埔公路": "大埔公路 / 沙田段",
+  "沙田": "沙田一帶",
+  "大圍": "大圍一帶",
+  "九龍塘": "九龍塘一帶",
+  "窩打老道": "窩打老道",
+  "旺角": "旺角一帶",
+};
+const TRAFFIC_DIRECTION_KEYWORDS = {
+  kowloonBound: ["往九龍", "往九龍方向", "向九龍", "九龍方向", "往旺角", "往佐敦", "往油麻地", "往尖沙咀", "往西九龍"],
+  ntBound: ["往新界", "往沙田", "往大埔", "往上水", "往粉嶺", "往馬場", "沙田方向", "大埔方向", "新界方向"],
+};
+const ROUTE_BOUND_CONFIG = {
+  "271": {
+    kowloonBound: { label: "往九龍方向", relevantTrafficDirection: "kowloonBound" },
+    ntBound: { label: "往大埔方向", relevantTrafficDirection: "ntBound" },
+  },
+  "72X": {
+    kowloonBound: { label: "往九龍方向", relevantTrafficDirection: "kowloonBound" },
+    ntBound: { label: "往大埔方向", relevantTrafficDirection: "ntBound" },
+  },
+};
 const NELSON_TO_WING_SING_ROUTES = [
   { route: "1", bound: "O", serviceType: "1", stopId: "6AB438AD3AE100DD", stopSeq: 17, destSeq: 19, stopLabel: "NELSON STREET MK515", destLabel: "WING SING LANE YT542" },
   { route: "1A", bound: "O", serviceType: "1", stopId: "6AB438AD3AE100DD", stopSeq: 26, destSeq: 28, stopLabel: "NELSON STREET MK515", destLabel: "WING SING LANE YT542" },
@@ -152,6 +183,7 @@ const els = {
   refreshButton: document.querySelector("#refreshButton"),
   routeName: document.querySelector("#routeName"),
   stopName: document.querySelector("#stopName"),
+  trafficWarning: document.querySelector("#trafficWarning"),
   reminderPanel: document.querySelector("#reminderPanel"),
   lastUpdated: document.querySelector("#lastUpdated"),
   clock: document.querySelector("#clock"),
@@ -165,6 +197,7 @@ const state = {
   stop: null,
   gmbRouteId: null,
   loadToken: 0,
+  trafficLoadToken: 0,
   selectedArrivalId: null,
   arrivals: [],
 };
@@ -255,6 +288,7 @@ async function loadPreset() {
     state.stop = stop;
     renderRouteName();
     await refreshEta({ token });
+    updateTrafficWarningsInBackground();
   } catch (error) {
     if (token !== state.loadToken) return;
     renderError(error);
@@ -292,6 +326,173 @@ async function refreshEta({ quiet = false, token = state.loadToken } = {}) {
     if (token === state.loadToken) {
       els.refreshButton.disabled = false;
     }
+  }
+}
+
+async function updateTrafficWarningsInBackground() {
+  const context = currentTrafficRouteContext();
+  const token = ++state.trafficLoadToken;
+
+  if (!context) {
+    renderTrafficWarning(null);
+    return;
+  }
+
+  renderTrafficWarningLoadingState();
+
+  try {
+    const trafficNewsItems = await getCachedOrFetchTrafficNews();
+    if (token !== state.trafficLoadToken) return;
+    const warning = getTrafficWarningForRoute(context.routeNo, context.boundKey, trafficNewsItems);
+    renderTrafficWarning(warning);
+  } catch (error) {
+    if (token !== state.trafficLoadToken) return;
+    console.warn("Traffic warning unavailable", error);
+    renderTrafficWarningUnavailable();
+  }
+}
+
+async function getCachedOrFetchTrafficNews() {
+  const cached = readTrafficCache();
+  if (cached && Date.now() - cached.timestamp < TRAFFIC_CACHE_MS) {
+    return cached.items;
+  }
+
+  const items = await fetchTrafficNews();
+  writeTrafficCache(items);
+  return items;
+}
+
+async function fetchTrafficNews() {
+  const response = await fetch(TRAFFIC_NEWS_URL, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(`Traffic news request failed (${response.status})`);
+  }
+
+  const xmlText = await response.text();
+  const xml = new DOMParser().parseFromString(xmlText, "application/xml");
+  const messages = Array.from(xml.getElementsByTagNameNS("*", "message"));
+
+  return messages.map((message) => {
+    const title = getXmlText(message, "ChinShort");
+    const content = getXmlText(message, "ChinText");
+    return {
+      id: getXmlText(message, "msgID"),
+      status: getXmlText(message, "CurrentStatus"),
+      title,
+      content,
+      time: getXmlText(message, "ReferenceDate"),
+    };
+  }).filter((item) => item.status !== "3" && (item.title || item.content));
+}
+
+function getTrafficWarningForRoute(routeNo, boundKey, trafficNewsItems) {
+  const keywords = TRAFFIC_ROUTE_KEYWORDS[routeNo] || [];
+  const boundConfig = ROUTE_BOUND_CONFIG[routeNo]?.[boundKey];
+  if (!keywords.length || !boundConfig) return null;
+
+  const affectedSegments = new Set();
+  const summaries = [];
+  let hasHighConfidence = false;
+
+  trafficNewsItems.forEach((item) => {
+    const text = `${item.title} ${item.content}`.replace(/\s+/g, " ").trim();
+    const matchedKeywords = keywords.filter((keyword) => text.includes(keyword));
+    if (!matchedKeywords.length) return;
+
+    const detectedDirections = detectTrafficDirections(text);
+    const hasMatchingDirection = detectedDirections.includes(boundConfig.relevantTrafficDirection);
+    const hasOppositeDirection = detectedDirections.some((direction) => direction !== boundConfig.relevantTrafficDirection);
+    if (hasOppositeDirection && !hasMatchingDirection) return;
+
+    matchedKeywords.forEach((keyword) => affectedSegments.add(TRAFFIC_SEGMENT_LABELS[keyword] || keyword));
+    if (hasMatchingDirection) {
+      hasHighConfidence = true;
+    }
+
+    if (summaries.length < 2) {
+      summaries.push(compactTrafficText(item.title || item.content));
+    }
+  });
+
+  if (!affectedSegments.size) return null;
+
+  return {
+    level: hasHighConfidence ? "high" : "medium",
+    segments: Array.from(affectedSegments),
+    directionLabel: hasHighConfidence ? boundConfig.label : "交通消息未有清楚指出",
+    summaries,
+  };
+}
+
+function renderTrafficWarning(warning) {
+  if (!warning) {
+    els.trafficWarning.className = "traffic-warning traffic-warning--normal";
+    els.trafficWarning.innerHTML = "🟢 暫未見相關方向的交通事故或嚴重擠塞";
+    return;
+  }
+
+  const isHigh = warning.level === "high";
+  els.trafficWarning.className = `traffic-warning traffic-warning--${warning.level}`;
+  els.trafficWarning.innerHTML = `
+    <p class="traffic-warning-title">${isHigh ? "⚠️" : "🟡"} 車程風險提示</p>
+    <p>可能受影響路段：${escapeHtml(warning.segments.join("、"))}</p>
+    <p>方向：${escapeHtml(warning.directionLabel)}</p>
+    <p>${isHigh ? "相關路段有交通消息，建議預多 10–20 分鐘。" : "相關路段有交通消息，建議留意實際車程。"}</p>
+    ${warning.summaries.length ? `<p class="traffic-warning-news">交通消息：${escapeHtml(warning.summaries.join(" / "))}</p>` : ""}
+  `;
+}
+
+function renderTrafficWarningLoadingState() {
+  els.trafficWarning.className = "traffic-warning traffic-warning--loading";
+  els.trafficWarning.textContent = "車程風險提示：檢查中...";
+}
+
+function renderTrafficWarningUnavailable() {
+  els.trafficWarning.className = "traffic-warning traffic-warning--unavailable";
+  els.trafficWarning.textContent = "車程風險提示暫時未能更新";
+}
+
+function currentTrafficRouteContext() {
+  const route = currentRoute();
+  const trip = currentTrip();
+  if (!ROUTE_BOUND_CONFIG[route.route]) return null;
+
+  return {
+    routeNo: route.route,
+    boundKey: trip.bound === "O" ? "kowloonBound" : "ntBound",
+  };
+}
+
+function detectTrafficDirections(text) {
+  return Object.entries(TRAFFIC_DIRECTION_KEYWORDS)
+    .filter(([, keywords]) => keywords.some((keyword) => text.includes(keyword)))
+    .map(([direction]) => direction);
+}
+
+function compactTrafficText(value) {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  return text.length > 88 ? `${text.slice(0, 88)}...` : text;
+}
+
+function getXmlText(parent, tagName) {
+  return parent.getElementsByTagNameNS("*", tagName)[0]?.textContent.trim() || "";
+}
+
+function readTrafficCache() {
+  try {
+    const cached = JSON.parse(localStorage.getItem(TRAFFIC_CACHE_KEY));
+    return cached && Number.isFinite(cached.timestamp) && Array.isArray(cached.items) ? cached : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeTrafficCache(items) {
+  try {
+    localStorage.setItem(TRAFFIC_CACHE_KEY, JSON.stringify({ timestamp: Date.now(), items }));
+  } catch {
+    // Cache is helpful, not required.
   }
 }
 

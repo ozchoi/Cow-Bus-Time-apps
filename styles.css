@@ -286,6 +286,54 @@ h2 {
   text-align: right;
 }
 
+.traffic-warning {
+  margin-top: 18px;
+  padding: 14px 18px;
+  color: var(--ink);
+  background: rgba(255, 253, 250, 0.92);
+  border: 1px solid var(--line);
+  border-left: 6px solid var(--muted);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  font-size: 0.92rem;
+  font-weight: 720;
+  line-height: 1.45;
+}
+
+.traffic-warning p {
+  margin: 3px 0;
+}
+
+.traffic-warning-title {
+  font-weight: 850;
+}
+
+.traffic-warning-news {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.traffic-warning--normal {
+  border-left-color: var(--green);
+  background: #f3fbf7;
+}
+
+.traffic-warning--medium {
+  border-left-color: #d99a22;
+  background: #fff9ea;
+}
+
+.traffic-warning--high {
+  border-left-color: var(--red);
+  background: #fff4ef;
+}
+
+.traffic-warning--loading,
+.traffic-warning--unavailable {
+  color: var(--muted);
+  background: rgba(255, 253, 250, 0.78);
+}
+
 .eta-list {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -439,6 +487,7 @@ h2 {
   .topbar,
   .preset-panel,
   .status-band,
+  .traffic-warning,
   .reminder-panel {
     padding-inline: 14px;
   }

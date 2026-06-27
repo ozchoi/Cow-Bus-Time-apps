@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>HK Route ETA</title>
     <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
-    <link rel="stylesheet" href="./styles.css?v=fast-support" />
+    <link rel="stylesheet" href="./styles.css?v=traffic-risk" />
   </head>
   <body>
     <main class="app-shell">
@@ -56,6 +56,10 @@
           <p id="lastUpdated" class="muted">Fetching live arrivals</p>
         </div>
         <div id="clock" class="clock"></div>
+      </section>
+
+      <section id="trafficWarning" class="traffic-warning traffic-warning--loading" aria-live="polite">
+        車程風險提示：檢查中...
       </section>
 
       <section id="reminderPanel" class="reminder-panel" data-status="idle" aria-live="polite">
