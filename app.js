@@ -1,5 +1,6 @@
 const KMB_BASE = "https://data.etabus.gov.hk/v1/transport/kmb";
 const GMB_BASE = "https://data.etagmb.gov.hk";
+const CITYBUS_BASE = "https://rt.data.gov.hk/v2/transport/citybus";
 const LEAVE_COUNTDOWN_MINUTES = 3;
 const NEARBY_ROUTE_WINDOW_MINUTES = 10;
 const NELSON_TO_WING_SING_ROUTES = [
@@ -16,6 +17,16 @@ const NELSON_TO_WING_SING_ROUTES = [
   { route: "281A", bound: "O", serviceType: "1", stopId: "14F176D358D65A8B", stopSeq: 13, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
   { route: "N216", bound: "O", serviceType: "1", stopId: "14F176D358D65A8B", stopSeq: 35, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
   { route: "N241", bound: "I", serviceType: "1", stopId: "14F176D358D65A8B", stopSeq: 42, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
+];
+const CITYBUS_TO_YAU_MA_TEI_ROUTES = [
+  {
+    route: "20A",
+    bound: "O",
+    stopId: "001559",
+    stopSeq: 27,
+    stopLabel: "CITYBUS STOP 27 BANK CENTRE",
+    destLabel: "WEST KOWLOON STATION",
+  },
 ];
 
 const ROUTES = [
@@ -102,7 +113,7 @@ const ROUTES = [
   },
   {
     id: "kmb-nelson-wing-sing",
-    label: "KMB",
+    label: "巴士",
     operator: "KMB_MULTI",
     trips: [
       {
@@ -287,8 +298,8 @@ async function getSelectedStop() {
   if (route.operator === "KMB_MULTI") {
     return {
       seq: "",
-      nameEn: "Nelson Street MK514/MK515 → Wing Sing Lane YT544/YT542",
-      nameTc: "奶路臣街 → 永星里",
+      nameEn: "Nelson Street MK514/MK515 → Wing Sing Lane YT544/YT542 + Citybus 20A stop 27",
+      nameTc: "奶路臣街 → 永星里 + 城巴20A第27站",
     };
   }
   return route.operator === "KMB" ? getKmbStop(route, trip) : getGmbStop(route, trip);
@@ -350,7 +361,7 @@ async function getKmbEta(route, trip, stop) {
 }
 
 async function getNearbyKmbEta() {
-  const arrivals = await Promise.all(NELSON_TO_WING_SING_ROUTES.map(async (candidate) => {
+  const kmbArrivals = await Promise.all(NELSON_TO_WING_SING_ROUTES.map(async (candidate) => {
     const json = await fetchJson(`${KMB_BASE}/eta/${candidate.stopId}/${candidate.route}/${candidate.serviceType}`);
     return json.data
       .filter((item) => item.dir === candidate.bound && Number(item.seq) === candidate.stopSeq)
@@ -369,8 +380,27 @@ async function getNearbyKmbEta() {
       .filter((arrival) => arrival.minutes != null && arrival.minutes <= NEARBY_ROUTE_WINDOW_MINUTES);
   }));
 
+  const citybusArrivals = await Promise.all(CITYBUS_TO_YAU_MA_TEI_ROUTES.map(async (candidate) => {
+    const json = await fetchJson(`${CITYBUS_BASE}/eta/CTB/${candidate.stopId}/${candidate.route}`);
+    return json.data
+      .filter((item) => item.dir === candidate.bound && item.stop === candidate.stopId)
+      .map((item) => {
+        const minutes = item.eta ? minutesUntil(item.eta) : null;
+        return {
+          id: `ctb-${candidate.route}-${candidate.bound}-${item.eta_seq}-${item.eta || "none"}`,
+          seq: item.eta_seq,
+          routeLabel: `Citybus ${candidate.route}`,
+          routeNumber: `CTB ${candidate.route}`,
+          time: item.eta ? new Date(item.eta) : null,
+          minutes,
+          remark: `${candidate.stopLabel} → ${candidate.destLabel}`,
+        };
+      })
+      .filter((arrival) => arrival.minutes != null && arrival.minutes <= NEARBY_ROUTE_WINDOW_MINUTES);
+  }));
+
   const seen = new Set();
-  return arrivals
+  return [...kmbArrivals, ...citybusArrivals]
     .flat()
     .filter((arrival) => {
       const key = `${arrival.routeNumber}-${arrival.time?.toISOString() || "none"}`;
