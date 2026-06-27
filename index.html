@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>HK Route ETA</title>
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=uber-links" />
   </head>
   <body>
     <main class="app-shell">
@@ -14,10 +14,20 @@
           <h1 id="app-title">實時到站數據</h1>
         </div>
         <div class="top-actions" aria-label="Quick actions">
-          <a class="quick-link uber-link" href="https://m.uber.com/ul/" target="_blank" rel="noopener noreferrer" aria-label="Open Uber">
-            <span class="quick-label">Uber</span>
-            <span class="quick-note">趕唔切就搭Uber</span>
-          </a>
+          <div class="uber-actions" aria-label="Uber destinations">
+            <p class="quick-note">趕唔切就搭Uber</p>
+            <div class="uber-links">
+              <a class="quick-link uber-link" href="https://m.uber.com/ul/?action=setPickup&amp;dropoff[latitude]=22.447459&amp;dropoff[longitude]=114.169128&amp;dropoff[nickname]=Tai%20Po%20Commercial%20Centre" target="_blank" rel="noopener noreferrer" aria-label="Uber返大埔">
+                <span class="quick-label">Uber返大埔</span>
+              </a>
+              <a class="quick-link uber-link" href="https://m.uber.com/ul/?action=setPickup&amp;dropoff[latitude]=22.3112134&amp;dropoff[longitude]=114.1710258&amp;dropoff[nickname]=Wing%20Sing%20Lane%20Yau%20Ma%20Tei" target="_blank" rel="noopener noreferrer" aria-label="Uber返油麻地">
+                <span class="quick-label">Uber返油麻地</span>
+              </a>
+              <a class="quick-link uber-link" href="https://m.uber.com/ul/?action=setPickup&amp;dropoff[latitude]=22.31882&amp;dropoff[longitude]=114.17285&amp;dropoff[nickname]=MacPherson%20Place" target="_blank" rel="noopener noreferrer" aria-label="Uber返菜牛">
+                <span class="quick-label">Uber返🥬🐮</span>
+              </a>
+            </div>
+          </div>
           <a class="quick-link" href="https://wa.me/+85264368695" target="_blank" rel="noopener noreferrer" aria-label="搵菜菜 on WhatsApp">
             <span class="quick-label">搵菜菜</span>
           </a>
