@@ -200,6 +200,7 @@ const state = {
   trafficLoadToken: 0,
   selectedArrivalId: null,
   arrivals: [],
+  shouldScrollToEta: false,
 };
 
 init();
@@ -230,6 +231,7 @@ function wireEvents() {
     state.tripId = button.dataset.tripId;
     state.stop = null;
     state.selectedArrivalId = null;
+    state.shouldScrollToEta = true;
     renderPresetButtons();
     loadPreset();
   });
@@ -318,6 +320,7 @@ async function refreshEta({ quiet = false, token = state.loadToken } = {}) {
     }
     renderRouteName();
     renderEta(arrivals);
+    scrollToEtaAfterRouteChoice();
     els.lastUpdated.textContent = `Updated ${formatTime(new Date())}`;
   } catch (error) {
     if (token !== state.loadToken) return;
@@ -667,6 +670,14 @@ function renderEta(arrivals) {
   }).join("");
 
   renderReminder(selectedArrival());
+}
+
+function scrollToEtaAfterRouteChoice() {
+  if (!state.shouldScrollToEta) return;
+  state.shouldScrollToEta = false;
+  requestAnimationFrame(() => {
+    els.reminderPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
 }
 
 function renderReminder(arrival) {
