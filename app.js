@@ -4,19 +4,19 @@ const CITYBUS_BASE = "https://rt.data.gov.hk/v2/transport/citybus";
 const LEAVE_COUNTDOWN_MINUTES = 3;
 const NEARBY_ROUTE_WINDOW_MINUTES = 10;
 const NELSON_TO_WING_SING_ROUTES = [
-  { route: "1", bound: "O", serviceType: "1", stopId: "6AB438AD3AE100DD", stopSeq: 17, stopLabel: "NELSON STREET MK515", destLabel: "WING SING LANE YT542" },
-  { route: "1A", bound: "O", serviceType: "1", stopId: "6AB438AD3AE100DD", stopSeq: 26, stopLabel: "NELSON STREET MK515", destLabel: "WING SING LANE YT542" },
-  { route: "2", bound: "I", serviceType: "1", stopId: "6AB438AD3AE100DD", stopSeq: 11, stopLabel: "NELSON STREET MK515", destLabel: "WING SING LANE YT542" },
-  { route: "6", bound: "I", serviceType: "1", stopId: "6AB438AD3AE100DD", stopSeq: 13, stopLabel: "NELSON STREET MK515", destLabel: "WING SING LANE YT542" },
-  { route: "70S", bound: "I", serviceType: "1", stopId: "14F176D358D65A8B", stopSeq: 13, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
-  { route: "87C", bound: "O", serviceType: "1", stopId: "14F176D358D65A8B", stopSeq: 14, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
-  { route: "87D", bound: "O", serviceType: "3", stopId: "14F176D358D65A8B", stopSeq: 13, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
-  { route: "87D", bound: "O", serviceType: "4", stopId: "14F176D358D65A8B", stopSeq: 18, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
-  { route: "87D", bound: "O", serviceType: "1", stopId: "14F176D358D65A8B", stopSeq: 19, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
-  { route: "87E", bound: "O", serviceType: "1", stopId: "14F176D358D65A8B", stopSeq: 11, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
-  { route: "281A", bound: "O", serviceType: "1", stopId: "14F176D358D65A8B", stopSeq: 13, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
-  { route: "N216", bound: "O", serviceType: "1", stopId: "14F176D358D65A8B", stopSeq: 35, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
-  { route: "N241", bound: "I", serviceType: "1", stopId: "14F176D358D65A8B", stopSeq: 42, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
+  { route: "1", bound: "O", serviceType: "1", stopId: "6AB438AD3AE100DD", stopSeq: 17, destSeq: 19, stopLabel: "NELSON STREET MK515", destLabel: "WING SING LANE YT542" },
+  { route: "1A", bound: "O", serviceType: "1", stopId: "6AB438AD3AE100DD", stopSeq: 26, destSeq: 28, stopLabel: "NELSON STREET MK515", destLabel: "WING SING LANE YT542" },
+  { route: "2", bound: "I", serviceType: "1", stopId: "6AB438AD3AE100DD", stopSeq: 11, destSeq: 14, stopLabel: "NELSON STREET MK515", destLabel: "WING SING LANE YT542" },
+  { route: "6", bound: "I", serviceType: "1", stopId: "6AB438AD3AE100DD", stopSeq: 13, destSeq: 16, stopLabel: "NELSON STREET MK515", destLabel: "WING SING LANE YT542" },
+  { route: "70S", bound: "I", serviceType: "1", stopId: "14F176D358D65A8B", stopSeq: 13, destSeq: 15, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
+  { route: "87C", bound: "O", serviceType: "1", stopId: "14F176D358D65A8B", stopSeq: 14, destSeq: 16, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
+  { route: "87D", bound: "O", serviceType: "3", stopId: "14F176D358D65A8B", stopSeq: 13, destSeq: 15, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
+  { route: "87D", bound: "O", serviceType: "4", stopId: "14F176D358D65A8B", stopSeq: 18, destSeq: 20, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
+  { route: "87D", bound: "O", serviceType: "1", stopId: "14F176D358D65A8B", stopSeq: 19, destSeq: 21, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
+  { route: "87E", bound: "O", serviceType: "1", stopId: "14F176D358D65A8B", stopSeq: 11, destSeq: 13, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
+  { route: "281A", bound: "O", serviceType: "1", stopId: "14F176D358D65A8B", stopSeq: 13, destSeq: 15, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
+  { route: "N216", bound: "O", serviceType: "1", stopId: "14F176D358D65A8B", stopSeq: 35, destSeq: 38, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
+  { route: "N241", bound: "I", serviceType: "1", stopId: "14F176D358D65A8B", stopSeq: 42, destSeq: 45, stopLabel: "NELSON STREET MK514", destLabel: "WING SING LANE YT544" },
 ];
 const CITYBUS_TO_YAU_MA_TEI_ROUTES = [
   {
@@ -375,6 +375,7 @@ async function getNearbyKmbEta() {
           seq: item.eta_seq,
           routeLabel: `Route ${candidate.route}`,
           routeNumber: candidate.route,
+          isFast: candidate.destSeq - candidate.stopSeq === 2,
           time: item.eta ? new Date(item.eta) : null,
           minutes,
           remark: `${candidate.stopLabel} → ${candidate.destLabel}`,
@@ -451,11 +452,13 @@ function renderEta(arrivals) {
   els.etaList.innerHTML = arrivals.map((arrival) => {
     const selected = arrival.id === state.selectedArrivalId;
     const minutesText = arrival.minutes == null ? "--" : arrival.minutes <= 0 ? "Due" : arrival.minutes;
-    const unit = typeof minutesText === "number" ? "min" : "";
+    const unit = typeof minutesText === "number" ? " min" : "";
+    const label = escapeHtml(arrival.routeLabel || `Arrival ${arrival.seq}`);
+    const fastBadge = arrival.isFast ? `<span class="fast-route">（快車）</span>` : "";
     return `
       <article class="eta-card" data-arrival-id="${escapeHtml(arrival.id)}" aria-selected="${selected}" tabindex="0">
-        <div class="seq"><span>${escapeHtml(arrival.routeLabel || `Arrival ${arrival.seq}`)}</span><span>${selected ? "Selected" : unit}</span></div>
-        <p class="minutes">${minutesText}</p>
+        <div class="seq"><span>${label}${fastBadge}</span><span>${selected ? "Selected" : ""}</span></div>
+        <p class="minutes"><span>${minutesText}</span><span class="minutes-unit">${unit}</span></p>
         <p class="time">${arrival.time ? formatTime(arrival.time) : "Time unavailable"}</p>
         <p class="remark">${escapeHtml(arrival.remark)}</p>
       </article>

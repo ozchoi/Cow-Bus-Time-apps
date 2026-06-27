@@ -166,6 +166,10 @@ h2 {
   border-radius: 8px;
 }
 
+.support-link {
+  background: var(--red);
+}
+
 .quick-link:hover,
 .quick-link:focus {
   outline: 2px solid rgba(18, 100, 163, 0.28);
@@ -364,12 +368,25 @@ h2 {
   font-weight: 760;
 }
 
+.fast-route {
+  color: var(--red);
+  font-weight: 850;
+}
+
 .eta-card .minutes {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
   margin: 0 0 8px;
   font-size: clamp(2.2rem, 8vw, 4.5rem);
   font-weight: 860;
   line-height: 0.92;
   letter-spacing: 0;
+}
+
+.minutes-unit {
+  font-size: 1rem;
+  font-weight: 780;
 }
 
 .eta-card .time {
