@@ -165,7 +165,8 @@ h2 {
 .uber-icon {
   width: 16px;
   height: 16px;
-  object-fit: contain;
+  object-fit: cover;
+  border-radius: 4px;
   flex: 0 0 auto;
 }
 
@@ -442,8 +443,21 @@ h2 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .uber-links .quick-link {
+    min-height: 34px;
+    padding: 5px 6px;
+    gap: 4px;
+  }
+
+  .uber-icon {
+    width: 11px;
+    height: 11px;
+    border-radius: 3px;
+  }
+
   .uber-links .quick-label {
     white-space: normal;
+    font-size: 0.78rem;
   }
 }
 
