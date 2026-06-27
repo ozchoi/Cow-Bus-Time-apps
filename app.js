@@ -147,6 +147,7 @@ const PRESET_GROUPS = [
 ];
 
 const els = {
+  dayCounter: document.querySelector("#dayCounter"),
   presetButtons: document.querySelector("#presetButtons"),
   refreshButton: document.querySelector("#refreshButton"),
   routeName: document.querySelector("#routeName"),
@@ -174,6 +175,7 @@ function init() {
   renderPresetButtons();
   wireEvents();
   updateClock();
+  updateDayCounter();
   setInterval(tick, 1000);
   setInterval(() => refreshEta({ quiet: true }), 30000);
   loadPreset();
@@ -181,6 +183,7 @@ function init() {
 
 function tick() {
   updateClock();
+  updateDayCounter();
   renderReminder(selectedArrival());
 }
 
@@ -567,6 +570,14 @@ function formatTime(date) {
 
 function updateClock() {
   els.clock.textContent = formatTime(new Date());
+}
+
+function updateDayCounter() {
+  const start = new Date(2026, 4, 19);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const day = Math.max(1, Math.floor((today - start) / 86400000) + 1);
+  els.dayCounter.textContent = `💕 Day - ${day}`;
 }
 
 function escapeHtml(value = "") {
