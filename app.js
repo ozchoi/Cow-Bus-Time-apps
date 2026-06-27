@@ -298,8 +298,8 @@ async function getSelectedStop() {
   if (route.operator === "KMB_MULTI") {
     return {
       seq: "",
-      nameEn: "Nelson Street MK514/MK515 → Wing Sing Lane YT544/YT542 + Citybus 20A stop 27",
-      nameTc: "奶路臣街 → 永星里 + 城巴20A第27站",
+      nameEn: "Nelson Street MK514/MK515 → Wing Sing Lane YT544/YT542 + Citybus 20A Bank Centre → Wing Sing Lane",
+      nameTc: "",
     };
   }
   return route.operator === "KMB" ? getKmbStop(route, trip) : getGmbStop(route, trip);
@@ -430,7 +430,7 @@ function renderRouteName() {
   els.routeName.textContent = `${route.label}: ${trip.label}`;
   els.stopName.textContent = state.stop
     ? route.operator === "KMB_MULTI"
-      ? `${state.stop.nameEn} / ${state.stop.nameTc}`
+      ? state.stop.nameTc ? `${state.stop.nameEn} / ${state.stop.nameTc}` : state.stop.nameEn
       : `Stop ${state.stop.seq}: ${state.stop.nameEn} / ${state.stop.nameTc}`
     : "";
 }

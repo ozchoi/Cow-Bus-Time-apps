@@ -141,8 +141,10 @@ h2 {
 }
 
 .quick-link {
-  display: grid;
-  align-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
   min-height: 48px;
   padding: 7px 10px;
   color: white;
@@ -158,6 +160,13 @@ h2 {
 
 .uber-link {
   background: #111;
+}
+
+.uber-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex: 0 0 auto;
 }
 
 .quick-label {
