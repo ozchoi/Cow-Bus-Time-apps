@@ -4,8 +4,26 @@ const CITYBUS_BASE = "https://rt.data.gov.hk/v2/transport/citybus";
 const TRAFFIC_NEWS_URL = "https://resource.data.one.gov.hk/td/tc/specialtrafficnews.xml";
 const TRAFFIC_CACHE_KEY = "cowBusTrafficNewsCacheV1";
 const TRAFFIC_CACHE_MS = 3 * 60 * 1000;
+const UBER_TAXI_PRODUCT_ID = window.APP_CONFIG?.uberTaxiProductId || "";
+const macphersonToYauMaTei = {
+  pickup: {
+    latitude: 22.3186723,
+    longitude: 114.1731067,
+    name: "麥花臣匯門口 MacPherson Place Entrance",
+    address: "38 Nelson Street, Mong Kok, Kowloon",
+  },
+  dropoff: {
+    latitude: 22.31119,
+    longitude: 114.17121,
+    name: "森基商業大廈 S. B. Commercial Building",
+    address: "478 Nathan Road, Yau Ma Tei, Kowloon",
+  },
+};
 const LEAVE_COUNTDOWN_MINUTES = 3;
 const NEARBY_ROUTE_WINDOW_MINUTES = 10;
+const UBER_JOURNEYS = {
+  macphersonToYauMaTei,
+};
 const TRAFFIC_ROUTE_KEYWORDS = {
   "271": ["獅子山隧道", "吐露港公路", "大埔公路", "沙田", "大圍", "九龍塘"],
   "72X": ["獅子山隧道", "吐露港公路", "大埔公路", "沙田", "大圍", "窩打老道", "旺角"],
@@ -236,6 +254,22 @@ function wireEvents() {
     loadPreset();
   });
 
+  const uberLinks = document.querySelectorAll(".uber-link");
+  uberLinks.forEach((link) => {
+    link.addEventListener("click", (event) => {
+      const journeyKey = link.dataset.uberJourney;
+      if (!journeyKey) return;
+      event.preventDefault();
+      const journey = UBER_JOURNEYS[journeyKey];
+      if (!journey) return;
+      const uberUrl = buildUberDeeplink({
+        ...journey,
+        productId: UBER_TAXI_PRODUCT_ID,
+      });
+      window.location.assign(uberUrl);
+    });
+  });
+
   els.etaList.addEventListener("click", (event) => {
     const card = event.target.closest(".eta-card");
     if (!card) return;
@@ -278,6 +312,36 @@ function renderPresetButtons() {
       </div>
     </section>
   `).join("");
+}
+
+function buildUberDeeplink({ pickup, dropoff, productId }) {
+  const params = new URLSearchParams();
+  params.set(
+    "pickup",
+    JSON.stringify({
+      latitude: pickup.latitude,
+      longitude: pickup.longitude,
+      addressLine1: pickup.name,
+      addressLine2: pickup.address,
+    }),
+  );
+  params.set(
+    "drop[0]",
+    JSON.stringify({
+      latitude: dropoff.latitude,
+      longitude: dropoff.longitude,
+      addressLine1: dropoff.name,
+      addressLine2: dropoff.address,
+    }),
+  );
+  if (productId) {
+    params.set("product_id", productId);
+  }
+  if (!productId) {
+    // A valid HK Uber Taxi product_id is required for guaranteed Taxi preselection.
+    // Without it, Uber will still open with fixed pickup/dropoff and allow manual selection.
+  }
+  return `https://m.uber.com/looking?${params.toString()}`;
 }
 
 async function loadPreset() {

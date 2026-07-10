@@ -27,7 +27,18 @@
                 <img class="uber-icon" src="./assets/uber-icon.png" alt="" aria-hidden="true" />
                 <span class="quick-label">返油麻地</span>
               </a>
-              <a class="quick-link uber-link" href="https://m.uber.com/ul/?action=setPickup&amp;dropoff[latitude]=22.31882&amp;dropoff[longitude]=114.17285&amp;dropoff[nickname]=MacPherson%20Place" target="_blank" rel="noopener noreferrer" aria-label="Uber返菜牛">
+              <a
+                class="quick-link uber-link"
+                href="https://m.uber.com/looking"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Uber Taxi麥花臣匯門口到油麻地"
+                data-uber-journey="macphersonToYauMaTei"
+              >
+                <img class="uber-icon" src="./assets/uber-icon.png" alt="" aria-hidden="true" />
+                <span class="quick-label">Uber Taxi｜麥花臣匯門口 → 油麻地</span>
+              </a>
+              <a class="quick-link uber-link" href="https://m.uber.com/ul/?action=setPickup&amp;dropoff[latitude]=22.31882&amp;dropoff[longitude]=114.17285&amp;dropoff[nickname]=MacPherson%20Place" target="_blank" rel="noopener noreferrer" aria-label="Uber返🥬🐮">
                 <img class="uber-icon" src="./assets/uber-icon.png" alt="" aria-hidden="true" />
                 <span class="quick-label">返🥬🐮</span>
               </a>
@@ -70,6 +81,6 @@
       <section id="etaList" class="eta-list" aria-label="Arrivals"></section>
     </main>
 
-    <script src="./app.js?v=scroll-to-eta" type="module"></script>
+    <script src="./app.js?v=uber-taxi-lookup" type="module"></script>
   </body>
 </html>
