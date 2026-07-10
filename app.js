@@ -30,6 +30,7 @@ const NEARBY_ROUTE_WINDOW_MINUTES = 10;
 const UBER_JOURNEYS = {
   macphersonToYauMaTei,
 };
+const UBER_APP_FALLBACK_DELAY_MS = 1200;
 const TRAFFIC_ROUTE_KEYWORDS = {
   "271": ["獅子山隧道", "吐露港公路", "大埔公路", "沙田", "大圍", "九龍塘"],
   "72X": ["獅子山隧道", "吐露港公路", "大埔公路", "沙田", "大圍", "窩打老道", "旺角"],
@@ -268,8 +269,7 @@ function wireEvents() {
       event.preventDefault();
       const journey = UBER_JOURNEYS[journeyKey];
       if (!journey) return;
-      const uberUrl = buildUberDeeplink(journey);
-      window.location.assign(uberUrl);
+      openUberJourney(journey);
     });
   });
 
@@ -323,6 +323,28 @@ function buildUberDeeplink({ pickup, dropoff, vehicle }) {
   params.set("drop[0]", JSON.stringify(dropoff));
   params.set("vehicle", vehicle);
   return `https://m.uber.com/go/product-selection?${params.toString()}`;
+}
+
+function buildUberUniversalLink({ pickup, dropoff, vehicle }) {
+  const params = new URLSearchParams();
+  params.set("action", "setPickup");
+  params.set("pickup", JSON.stringify(pickup));
+  params.set("drop[0]", JSON.stringify(dropoff));
+  params.set("vehicle", vehicle);
+  return `https://m.uber.com/ul/?${params.toString()}`;
+}
+
+function openUberJourney(journey) {
+  const appUrl = buildUberUniversalLink(journey);
+  const webUrl = buildUberDeeplink(journey);
+
+  window.location.assign(appUrl);
+
+  window.setTimeout(() => {
+    if (document.visibilityState === "visible") {
+      window.location.assign(webUrl);
+    }
+  }, UBER_APP_FALLBACK_DELAY_MS);
 }
 
 async function loadPreset() {
